@@ -1,0 +1,151 @@
+slider1:0.5<0,1,0.001>OP1 Volume
+slider2:1<1,32,1>OP1 Harmonic
+slider3:0<0,1,0.005>OP1 Tune
+slider4:0<0,5,0.05>OP1 Feedback
+slider5:127<0,127,1>OP1 Breath Min
+
+slider7:0<0,1,0.001>OP2 Volume
+slider8:1<1,32,1>OP2 Harmonic
+slider9:0<0,1,0.005>OP2 Tune
+slider10:0<0,5,0.05>OP2 Feedback
+slider11:127<0,127,1>OP2 Breath Min
+
+slider13:0<0,1,0.001>OP3 Volume
+slider14:1<1,32,1>OP3 Harmonic
+slider15:0<0,1,0.005>OP3 Tune
+slider16:0<0,5,0.05>OP3 Feedback
+slider17:127<0,127,1>OP3 Breath Min
+
+slider19:0<0,1,0.001>OP4 Volume
+slider20:1<1,32,1>OP4 Harmonic
+slider21:0<0,1,0.005>OP4 Tune
+slider22:0<0,5,0.05>OP4 Feedback
+slider23:127<0,127,1>OP4 Breath Min
+
+slider25:2<0,7,0.01>Bend Range
+slider26:0<0,127,1>Volume Breath Min
+
+@init
+	OP1pos = 0;		// Sine position
+	OP2pos = 0;
+	OP3pos = 0;
+	OP4pos = 0;
+
+	OP1adj = 0;		// Angular speed
+	OP2adj = 0;
+	OP3adj = 0;
+	OP4adj = 0;
+
+	OP1mod = 0;		// Modulation of angle
+	OP2mod = 0;
+	OP3mod = 0;
+	OP4mod = 0;
+
+	OP1feed = 0;	// Modulation feedback amount
+	OP2feed = 0;
+	OP3feed = 0;
+	OP4feed = 0;
+
+	OP1out = 0;		// Audio output
+	OP2out = 0;
+	OP3out = 0;
+	OP4out = 0;
+
+	midNote = 0;
+	midPitch = 0;
+	midBend = 0;
+	midVol = 1;
+
+	isRecalcPitch = 0;
+
+@slider
+	volume1 = slider1;
+	adj1 = $pi * (slider2 + slider3) / srate;
+
+	OP1feed = slider4;
+
+	OP1breathMin = slider5 / 127;
+	OP1breathStep = (127 - slider5) / 127;
+
+	volume2 = slider7 * 10;
+	adj2 = $pi * (slider8 + slider9) / srate;
+
+	OP2feed = slider10;
+
+	OP2breathMin = slider11 / 127;
+	OP2breathStep = (127 - slider11) / 127;
+
+	volume3 = slider13 * 10;
+	adj3 = $pi * (slider14 + slider15) / srate;
+
+	OP3feed = slider16;
+
+	OP3breathMin = slider17 / 127;
+	OP3breathStep = (127 - slider17) / 127;
+
+	volume4 = slider19 * 10;
+	adj4 = $pi * (slider20 + slider21) / srate;
+
+	OP4feed = slider22;
+
+	OP4breathMin = slider13 / 127;
+	OP4breathStep = (127 - slider13) / 127;
+
+	bendRange = slider25 * 2 / 127;
+
+	volBreathMin = slider26 / 127;
+	volBreathStep = (127 - slider26) / 127;
+
+@block
+	while (midirecv(0, msg1, msg2, msg3))(
+		msg1 == 144 ? (		// Note update
+			midNote = msg2;
+			isRecalcPitch = 1;
+		);
+
+		msg1 == 208 ? (		// Volume update
+			midVol = msg2 / 127;
+		);
+
+		msg1 == 224 ? (		// Bend update
+			midBend = (msg3 - 64) * bendRange;
+			isRecalcPitch = 1;
+		);
+	);
+
+	isRecalcPitch ? (
+		midPitch = 440 * 2^((midNote - 57 + midBend) / 12);
+		OP1adj = adj1 * midPitch;
+		OP2adj = adj2 * midPitch;
+		OP3adj = adj3 * midPitch;
+		OP4adj = adj4 * midPitch;
+		isRecalcPitch = 0;
+	);
+
+@sample
+	OP4mod = OP4out * OP4feed;		// Hardcoded algorithm
+	OP4out = sin(OP4pos + OP4mod) * volume4 * (OP4breathMin + OP4breathStep * midVol);
+
+	OP3mod = OP3out * OP3feed;
+	OP3out = sin(OP3pos + OP3mod) * volume3 * (OP3breathMin + OP3breathStep * midVol);
+
+	OP2mod = OP3out + OP2out * OP2feed;
+	OP2out = sin(OP2pos + OP2mod) * volume2 * (OP2breathMin + OP2breathStep * midVol);
+
+	OP1mod = OP2out + OP4out + OP1out * OP1feed;
+	OP1out = sin(OP1pos + OP1mod) * volume1 * (OP1breathMin + OP1breathStep * midVol);
+
+	spl0 = OP1out * (volBreathMin + volBreathStep * midVol);
+	spl1 = OP1out * (volBreathMin + volBreathStep * midVol);
+
+	OP1pos += OP1adj;		// Update angular positions
+	(OP1pos >= 2.0*$pi) ? OP1pos -= 2.0*$pi;
+
+	OP2pos += OP2adj;
+	(OP2pos >= 2.0*$pi) ? OP2pos -= 2.0*$pi;
+
+	OP3pos += OP3adj;
+	(OP3pos >= 2.0*$pi) ? OP3pos -= 2.0*$pi;
+
+	OP4pos += OP4adj;
+	(OP4pos >= 2.0*$pi) ? OP4pos -= 2.0*$pi;
