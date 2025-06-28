@@ -1,29 +1,38 @@
-slider1:0.5<0,1,0.001>OP1 Volume
+slider1:0<0,1,0.001>OP1 Volume
 slider2:1<1,32,1>OP1 Harmonic
 slider3:0<0,1,0.005>OP1 Tune
 slider4:0<0,5,0.05>OP1 Feedback
 slider5:127<0,127,1>OP1 Breath Min
+slider6:0<0,1,0.001>OP1 Low Attenuation
+slider7:0<0,1,0.001>OP1 High Attenuation
 
-slider7:0<0,1,0.001>OP2 Volume
-slider8:1<1,32,1>OP2 Harmonic
-slider9:0<0,1,0.005>OP2 Tune
-slider10:0<0,5,0.05>OP2 Feedback
-slider11:127<0,127,1>OP2 Breath Min
+slider11:0<0,1,0.001>OP2 Volume
+slider12:1<1,32,1>OP2 Harmonic
+slider13:0<0,1,0.005>OP2 Tune
+slider14:0<0,5,0.05>OP2 Feedback
+slider15:127<0,127,1>OP2 Breath Min
+slider16:0<0,1,0.001>OP2 Low Attenuation
+slider17:0<0,1,0.001>OP2 High Attenuation
 
-slider13:0<0,1,0.001>OP3 Volume
-slider14:1<1,32,1>OP3 Harmonic
-slider15:0<0,1,0.005>OP3 Tune
-slider16:0<0,5,0.05>OP3 Feedback
-slider17:127<0,127,1>OP3 Breath Min
+slider21:0<0,1,0.001>OP3 Volume
+slider22:1<1,32,1>OP3 Harmonic
+slider23:0<0,1,0.005>OP3 Tune
+slider24:0<0,5,0.05>OP3 Feedback
+slider25:127<0,127,1>OP3 Breath Min
+slider26:0<0,1,0.001>OP3 Low Attenuation
+slider27:0<0,1,0.001>OP3 High Attenuation
 
-slider19:0<0,1,0.001>OP4 Volume
-slider20:1<1,32,1>OP4 Harmonic
-slider21:0<0,1,0.005>OP4 Tune
-slider22:0<0,5,0.05>OP4 Feedback
-slider23:127<0,127,1>OP4 Breath Min
+slider31:0<0,1,0.001>OP4 Volume
+slider32:1<1,32,1>OP4 Harmonic
+slider33:0<0,1,0.005>OP4 Tune
+slider34:0<0,5,0.05>OP4 Feedback
+slider35:127<0,127,1>OP4 Breath Min
+slider36:0<0,1,0.001>OP4 Low Attenuation
+slider37:0<0,1,0.001>OP4 High Attenuation
 
-slider25:2<0,7,0.01>Bend Range
-slider26:0<0,127,1>Volume Breath Min
+slider41:2<0,7,0.01>Bend Range
+slider42:0<0,127,1>Volume Breath Min
+slider43:1<1,16,1>MIDI Channel
 
 @init
 	OP1pos = 0;		// Sine position
@@ -31,7 +40,7 @@ slider26:0<0,127,1>Volume Breath Min
 	OP3pos = 0;
 	OP4pos = 0;
 
-	OP1adj = 0;		// Angular speed
+	OP1adj = 0;		// Adjustment per sample
 	OP2adj = 0;
 	OP3adj = 0;
 	OP4adj = 0;
@@ -46,6 +55,11 @@ slider26:0<0,127,1>Volume Breath Min
 	OP3feed = 0;
 	OP4feed = 0;
 
+	OP1NGain = 0;	// Note gain after attenuation
+	OP2NGain = 0;
+	OP3NGain = 0;
+	OP4NGain = 0;
+
 	OP1out = 0;		// Audio output
 	OP2out = 0;
 	OP3out = 0;
@@ -54,7 +68,7 @@ slider26:0<0,127,1>Volume Breath Min
 	midNote = 0;
 	midPitch = 0;
 	midBend = 0;
-	midVol = 1;
+	midVol = 0;
 
 	isRecalcPitch = 0;
 
@@ -67,73 +81,93 @@ slider26:0<0,127,1>Volume Breath Min
 	OP1breathMin = slider5 / 127;
 	OP1breathStep = (127 - slider5) / 127;
 
-	volume2 = slider7 * 10;
-	adj2 = $pi * (slider8 + slider9) / srate;
+	OP1NGainL = slider6 / 127;
+	OP1NGainH = slider7 / 127;
 
-	OP2feed = slider10;
+	volume2 = slider11 * 10;
+	adj2 = $pi * (slider12 + slider13) / srate;
 
-	OP2breathMin = slider11 / 127;
-	OP2breathStep = (127 - slider11) / 127;
+	OP2feed = slider14;
 
-	volume3 = slider13 * 10;
-	adj3 = $pi * (slider14 + slider15) / srate;
+	OP2breathMin = slider15 / 127;
+	OP2breathStep = (127 - slider15) / 127;
 
-	OP3feed = slider16;
+	OP2NGainL = slider16 / 127;
+	OP2NGainH = slider17 / 127;
 
-	OP3breathMin = slider17 / 127;
-	OP3breathStep = (127 - slider17) / 127;
+	volume3 = slider21 * 10;
+	adj3 = $pi * (slider22 + slider23) / srate;
 
-	volume4 = slider19 * 10;
-	adj4 = $pi * (slider20 + slider21) / srate;
+	OP3feed = slider24;
 
-	OP4feed = slider22;
+	OP3breathMin = slider25 / 127;
+	OP3breathStep = (127 - slider25) / 127;
 
-	OP4breathMin = slider13 / 127;
-	OP4breathStep = (127 - slider13) / 127;
+	OP3NGainL = slider26 / 127;
+	OP3NGainH = slider27 / 127;
 
-	bendRange = slider25 * 2 / 127;
+	volume4 = slider31 * 10;
+	adj4 = $pi * (slider32 + slider33) / srate;
 
-	volBreathMin = slider26 / 127;
-	volBreathStep = (127 - slider26) / 127;
+	OP4feed = slider34;
+
+	OP4breathMin = slider35 / 127;
+	OP4breathStep = (127 - slider35) / 127;
+
+	OP4NGainL = slider36 / 127;
+	OP4NGainH = slider37 / 127;
+
+	bendRange = slider41 * 2 / 65535;
+
+	volBreathMin = slider42 / 127;
+	volBreathStep = (127 - slider42) / 127;
+
+	midChNO = 143 + slider43;		// 144 (0x9X) + channel - 1 (Note On)
+	midChCP = 207 + slider43;		// 208 (0xDX) + channel - 1 (Channel Pressure)
+	midChBD = 223 + slider43;		// 224 (0xFX) + channel - 1 (Bend)
 
 @block
-	while (midirecv(0, msg1, msg2, msg3))(
-		msg1 == 144 ? (		// Note update
-			midNote = msg2;
+	while (midirecv(0, msg1, msg2))(
+		msg1 == midChNO ? (		// Note update
+			midNote = msg2 & 255;
 			isRecalcPitch = 1;
 		);
 
-		msg1 == 208 ? (		// Volume update
-			midVol = msg2 / 127;
-		);
+		msg1 == midChCP ? midVol = msg2 / 127;		// Volume update (Channel Pressure)
 
-		msg1 == 224 ? (		// Bend update
-			midBend = (msg3 - 64) * bendRange;
+		msg1 == midChBD ? (		// Bend update
+			midBend = (msg2 - 32767) * bendRange;
 			isRecalcPitch = 1;
 		);
 	);
 
-	isRecalcPitch ? (
+	isRecalcPitch ? (		// Pitch update if necessary
 		midPitch = 440 * 2^((midNote - 57 + midBend) / 12);
 		OP1adj = adj1 * midPitch;
 		OP2adj = adj2 * midPitch;
 		OP3adj = adj3 * midPitch;
 		OP4adj = adj4 * midPitch;
+
+		OP1NGain = (1 - (midNote * OP1NGainH)) * (1 - (127 - midNote) * OP1NGainL);
+		OP2NGain = (1 - (midNote * OP2NGainH)) * (1 - (127 - midNote) * OP2NGainL);
+		OP3NGain = (1 - (midNote * OP3NGainH)) * (1 - (127 - midNote) * OP3NGainL);
+		OP4NGain = (1 - (midNote * OP4NGainH)) * (1 - (127 - midNote) * OP4NGainL);
+
 		isRecalcPitch = 0;
 	);
 
 @sample
 	OP4mod = OP4out * OP4feed;		// Hardcoded algorithm
-	OP4out = sin(OP4pos + OP4mod) * volume4 * (OP4breathMin + OP4breathStep * midVol);
+	OP4out = sin(OP4pos + OP4mod) * volume4 * OP4NGain * (OP4breathMin + OP4breathStep * midVol);
 
 	OP3mod = OP3out * OP3feed;
-	OP3out = sin(OP3pos + OP3mod) * volume3 * (OP3breathMin + OP3breathStep * midVol);
+	OP3out = sin(OP3pos + OP3mod) * volume3 * OP3NGain * (OP3breathMin + OP3breathStep * midVol);
 
 	OP2mod = OP3out + OP2out * OP2feed;
-	OP2out = sin(OP2pos + OP2mod) * volume2 * (OP2breathMin + OP2breathStep * midVol);
+	OP2out = sin(OP2pos + OP2mod) * volume2 * OP2NGain * (OP2breathMin + OP2breathStep * midVol);
 
 	OP1mod = OP2out + OP4out + OP1out * OP1feed;
-	OP1out = sin(OP1pos + OP1mod) * volume1 * (OP1breathMin + OP1breathStep * midVol);
+	OP1out = sin(OP1pos + OP1mod) * volume1 * OP1NGain * (OP1breathMin + OP1breathStep * midVol);
 
 	spl0 = OP1out * (volBreathMin + volBreathStep * midVol);
 	spl1 = OP1out * (volBreathMin + volBreathStep * midVol);
