@@ -117,7 +117,7 @@ slider43:1<1,16,1>MIDI Channel
 	OP4NGainL = slider36 / 127;
 	OP4NGainH = slider37 / 127;
 
-	bendRange = slider41 * 2 / 65535;
+	bendRange = slider41 / 16384;
 
 	volBreathMin = slider42 / 127;
 	volBreathStep = (127 - slider42) / 127;
@@ -136,7 +136,7 @@ slider43:1<1,16,1>MIDI Channel
 		msg1 == midChCP ? midVol = msg2 / 127;		// Volume update (Channel Pressure)
 
 		msg1 == midChBD ? (		// Bend update
-			midBend = (msg2 - 32767) * bendRange;
+			midBend = (msg2 - 16384) * bendRange;
 			isRecalcPitch = 1;
 		);
 	);
